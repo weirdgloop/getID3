@@ -929,6 +929,7 @@ $this->warning('incomplete/incorrect handling of "stsd" with Parrot metadata in 
 										break;
 
 									case 'mp4a':
+									case 'Opus':
 										$atom_structure['sample_description_table'][$i]['subatoms'] = $this->QuicktimeParseContainerAtom(substr($atom_structure['sample_description_table'][$i]['data'], 20), $baseoffset + $stsdEntriesDataOffset - 20 - 16, $atomHierarchy, $ParseAllPossibleAtoms);
 
 										$info['quicktime']['audio']['codec']       = $this->QuicktimeAudioCodecLookup($atom_structure['sample_description_table'][$i]['data_format']);
@@ -2620,6 +2621,7 @@ $this->error('fragmented mp4 files not currently supported');
 			$QuicktimeAudioCodecLookup['MS'."\x00\x11"] = 'DV IMA';
 			$QuicktimeAudioCodecLookup['MS'."\x00\x55"] = 'Fraunhofer MPEG Layer III';
 			$QuicktimeAudioCodecLookup['NONE']          = 'No Encoding';
+			$QuicktimeAudioCodecLookup['Opus']          = 'Opus';
 			$QuicktimeAudioCodecLookup['Qclp']          = 'Qualcomm PureVoice';
 			$QuicktimeAudioCodecLookup['QDM2']          = 'QDesign Music 2';
 			$QuicktimeAudioCodecLookup['QDMC']          = 'QDesign Music 1';
