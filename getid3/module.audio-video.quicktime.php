@@ -881,6 +881,7 @@ $this->warning('incomplete/incorrect handling of "stsd" with Parrot metadata in 
 
 								switch ($atom_structure['sample_description_table'][$i]['data_format']) {
 									case '2vuY':
+									case 'av01':
 									case 'avc1':
 									case 'cvid':
 									case 'dvc ':
@@ -2538,6 +2539,7 @@ $this->error('fragmented mp4 files not currently supported');
 			$QuicktimeVideoCodecLookup['3IV2'] = '3ivx MPEG-4 v2';
 			$QuicktimeVideoCodecLookup['3IVX'] = '3ivx MPEG-4';
 			$QuicktimeVideoCodecLookup['8BPS'] = 'Planar RGB';
+			$QuicktimeVideoCodecLookup['av01'] = 'AV1';
 			$QuicktimeVideoCodecLookup['avc1'] = 'H.264/MPEG-4 AVC';
 			$QuicktimeVideoCodecLookup['avr '] = 'AVR-JPEG';
 			$QuicktimeVideoCodecLookup['b16g'] = '16Gray';
