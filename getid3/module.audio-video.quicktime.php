@@ -908,6 +908,7 @@ $this->warning('incomplete/incorrect handling of "stsd" with Parrot metadata in 
 									case 'v308':
 									case 'v408':
 									case 'v410':
+									case 'vp09':
 									case 'yuv2':
 										$info['fileformat'] = 'mp4';
 										$info['video']['fourcc'] = $atom_structure['sample_description_table'][$i]['data_format'];
@@ -2583,6 +2584,7 @@ $this->error('fragmented mp4 files not currently supported');
 			$QuicktimeVideoCodecLookup['syv9'] = 'Sorenson YUV9';
 			$QuicktimeVideoCodecLookup['tga '] = 'Targa';
 			$QuicktimeVideoCodecLookup['tiff'] = 'TIFF';
+			$QuicktimeVideoCodecLookup['vp09'] = 'VP9';
 			$QuicktimeVideoCodecLookup['WRAW'] = 'Windows RAW';
 			$QuicktimeVideoCodecLookup['WRLE'] = 'BMP';
 			$QuicktimeVideoCodecLookup['y420'] = 'YUV420';
