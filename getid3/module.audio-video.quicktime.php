@@ -349,6 +349,7 @@ $this->error('HEIF files not currently supported');
 								if (isset($value_array2['data_format'])) {
 									switch ($value_array2['data_format']) {
 										case 'avc1':
+										case 'avc3':
 										case 'mp4v':
 											// video data
 											$isVideo = true;
@@ -883,6 +884,7 @@ $this->warning('incomplete/incorrect handling of "stsd" with Parrot metadata in 
 									case '2vuY':
 									case 'av01':
 									case 'avc1':
+									case 'avc3':
 									case 'cvid':
 									case 'dvc ':
 									case 'dvcp':
@@ -2542,6 +2544,7 @@ $this->error('fragmented mp4 files not currently supported');
 			$QuicktimeVideoCodecLookup['8BPS'] = 'Planar RGB';
 			$QuicktimeVideoCodecLookup['av01'] = 'AV1';
 			$QuicktimeVideoCodecLookup['avc1'] = 'H.264/MPEG-4 AVC';
+			$QuicktimeVideoCodecLookup['avc3'] = 'H.264/MPEG-4 AVC';
 			$QuicktimeVideoCodecLookup['avr '] = 'AVR-JPEG';
 			$QuicktimeVideoCodecLookup['b16g'] = '16Gray';
 			$QuicktimeVideoCodecLookup['b32a'] = '32AlphaGray';
