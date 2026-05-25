@@ -927,6 +927,99 @@ $this->warning('incomplete/incorrect handling of "stsd" with Parrot metadata in 
 											$info['quicktime']['video']['resolution_x'] = $info['video']['resolution_x'];
 											$info['quicktime']['video']['resolution_y'] = $info['video']['resolution_y'];
 										}
+										if ( $atom_structure['sample_description_table'][$i]['data_format'] === 'av01' ) {
+											// Skipping size and reference ID.
+											$id = substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset+4, 4); $STSDvOffset +=  8;
+											if ( $id === 'av1C') {
+												// Skipping version
+											$STSDvOffset += 1;
+											$tmp = getid3_lib::BigEndian2Int(substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset, 1)); $STSDvOffset += 1;
+											$av1C['seq_profile'] = ($tmp >> 5) & 0x7;
+											$av1C['seq_level_idx'] = str_pad( $tmp & 0x1f, 2, '0', STR_PAD_LEFT );
+											$tmp = getid3_lib::BigEndian2Int(substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset, 1)); $STSDvOffset += 1;
+											$av1C['seq_tier'] = ($tmp >> 7) & 0x1 ? 'H' : 'M';
+											$av1C['high_bitdepth'] = ($tmp >> 6) & 0x1;
+											$av1C['twelve_bit'] = ($tmp >> 5) & 0x1;
+											$info['video']['bits_per_sample'] = 8;
+												if ( $av1C['seq_profile'] == 2 && $av1C['high_bitdepth'] ) {
+													$info['video']['bits_per_sample'] = $av1C['twelve_bit'] ? 12 : 10;
+												} elseif( $av1C['seq_profile'] <= 2 ) {
+													$info['video']['bits_per_sample'] = $av1C['high_bitdepth'] ? 10 : 8;
+												}
+												$info['video']['codec_string'] =  "{$info['video']['fourcc']}.{$av1C['seq_profile']}.{$av1C['seq_level_idx']}{$av1C['seq_tier']}.";
+												$info['video']['codec_string'] .= str_pad( $info['video']['bits_per_sample'], 2, '0', STR_PAD_LEFT );
+											}
+										} elseif ( in_array( $atom_structure['sample_description_table'][$i]['data_format'], [ 'avc1', 'avc3' ] ) ) {
+											// Skipping size and reference ID.
+											$id = substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset+4, 4); $STSDvOffset +=  8;
+											if ( $id === 'avcC') {
+												// Skipping version
+												$STSDvOffset += 1;
+												$avcC['profile_number'] = str_pad( strtoupper( dechex( getid3_lib::BigEndian2Int(substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset, 1))) ), 2, '0', STR_PAD_LEFT ); $STSDvOffset += 1;
+												$avcC['constraints'] = str_pad( strtoupper( dechex( getid3_lib::BigEndian2Int(substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset, 1))) ), 2, '0', STR_PAD_LEFT ); $STSDvOffset += 1;
+												$avcC['level'] = str_pad( strtoupper( dechex( getid3_lib::BigEndian2Int(substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset, 1))) ), 2, '0', STR_PAD_LEFT ); $STSDvOffset += 1;
+
+												$info['video']['codec_string'] =  "{$info['video']['fourcc']}.{$avcC['profile_number']}{$avcC['constraints']}{$avcC['level']}";
+											}
+										} elseif ( in_array( $atom_structure['sample_description_table'][$i]['data_format'], [ 'hev1', 'hvc1' ] ) ) {
+											// Skipping size and reference ID.
+											$id = substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset+4, 4); $STSDvOffset +=  8;
+											if ( $id === 'hvcC') {
+												// Skipping configuration version
+												$STSDvOffset += 1;
+												$tmp = getid3_lib::BigEndian2Int(substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset, 1)); $STSDvOffset += 1;
+												switch( $tmp >> 6 ) {
+													case 0:
+														$hvcC['general_profile_space'] = '';
+														break;
+													case 1:
+														$hvcC['general_profile_space'] = 'A';
+														break;
+													case 2:
+														$hvcC['general_profile_space'] = 'B';
+														break;
+													case 3:
+														$hvcC['general_profile_space'] = 'C';
+														break;
+													default:
+														$hvcC['general_profile_space'] = '';
+												}
+												$hvcC['general_tier_flag'] = (($tmp & 0x20) >> 5) ? 'H' : 'L';
+												// Used as decimal number
+												$hvcC['general_profile_idc'] = $tmp & 0x1F;
+												$v = getid3_lib::BigEndian2Int(substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset, 4)); $STSDvOffset += 4;
+												// Bit reversing based on https://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
+												// swap odd and even bits
+												$v = (($v >> 1) & 0x55555555) | (($v & 0x55555555) << 1);
+												// swap consecutive pairs
+												$v = (($v >> 2) & 0x33333333) | (($v & 0x33333333) << 2);
+												// swap nibbles ...
+												$v = (($v >> 4) & 0x0F0F0F0F) | (($v & 0x0F0F0F0F) << 4);
+												// swap bytes
+												$v = (($v >> 8) & 0x00FF00FF) | (($v & 0x00FF00FF) << 8);
+												// swap 2-byte long pairs
+												$v = ( $v >> 16             ) | ( $v               << 16);
+												// Clamp 64-bit value to 32-bit.
+												$v = $v & 0xFFFFFFFF;
+												$hvcC['general_profile_compatibility'] = strtoupper( dechex( $v ) );
+												$tmp = substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset, 6); $STSDvOffset += 6;
+												$hvcC['general_constraint_indicator'] = '';
+												$trimmed = false;
+												foreach ( str_split( strrev( $tmp ) ) as $val ) {
+													$val = ord($val);
+													if (!$trimmed && $val === 0 ) {
+														continue;
+													} else {
+														$trimmed = true;
+													}
+													$val = str_pad( strtoupper( dechex( $val ) ), 2, '0', STR_PAD_LEFT );
+													$hvcC['general_constraint_indicator'] = ".{$val}{$hvcC['general_constraint_indicator']}";
+												}
+												$hvcC['general_constraint_indicator'] = $hvcC['general_constraint_indicator'] ?: '.0';
+												$hvcC['general_level_idc'] = getid3_lib::BigEndian2Int(substr($atom_structure['sample_description_table'][$i]['data'], $STSDvOffset, 1)); $STSDvOffset += 1;
+												$info['video']['codec_string'] = "{$info['video']['fourcc']}.{$hvcC['general_profile_space']}{$hvcC['general_profile_idc']}.{$hvcC['general_profile_compatibility']}.{$hvcC['general_tier_flag']}{$hvcC['general_level_idc']}{$hvcC['general_constraint_indicator']}";
+											}
+										}
 										break;
 
 									case 'qtvr':

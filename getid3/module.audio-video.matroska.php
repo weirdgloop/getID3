@@ -324,7 +324,6 @@ class getid3_matroska extends getid3_handler
 						if (isset($trackarray['PixelCropRight']))   { $track_info['crop_right']  = $trackarray['PixelCropRight']; }
 						if (!empty($trackarray['DefaultDuration'])) { $track_info['frame_rate']  = round(1000000000 / $trackarray['DefaultDuration'], 3); }
 						if (isset($trackarray['CodecName']))        { $track_info['codec']       = $trackarray['CodecName']; }
-
 						switch ($trackarray['CodecID']) {
 							case 'V_MS/VFW/FOURCC':
 								getid3_lib::IncludeDependency(GETID3_INCLUDEPATH.'module.audio-video.riff.php', __FILE__, true);
@@ -566,6 +565,28 @@ class getid3_matroska extends getid3_handler
 						}
 					}
 				}
+			}
+		}
+
+		foreach($info['matroska']['tracks']['tracks']?? [] as $trackarray) {
+			if ( ( $trackarray['CodecID'] ?? '' ) == 'V_AV1' && array_key_exists( 'CodecPrivate', $trackarray )) {
+				$tmp = getid3_lib::BigEndian2Int(substr($trackarray['CodecPrivate'], 1, 1));
+				$av1C['seq_profile'] = ($tmp >> 5) & 0x7;
+				$av1C['seq_level_idx'] = str_pad( $tmp & 0x1f, 2, '0', STR_PAD_LEFT );
+				$tmp = getid3_lib::BigEndian2Int(substr($trackarray['CodecPrivate'], 2, 1));
+				$av1C['seq_tier'] = ($tmp >> 7) & 0x1 ? 'H' : 'M';
+				$av1C['high_bitdepth'] = ($tmp >> 6) & 0x1;
+				$av1C['twelve_bit'] = ($tmp >> 5) & 0x1;
+				$info['video']['bits_per_sample'] = 8;
+				if ( $av1C['seq_profile'] == 2 && $av1C['high_bitdepth'] ) {
+					$info['video']['bits_per_sample'] = $av1C['twelve_bit'] ? 12 : 10;
+				} elseif( $av1C['seq_profile'] <= 2 ) {
+					$info['video']['bits_per_sample'] = $av1C['high_bitdepth'] ? 10 : 8;
+				}
+				$info['video']['codec'] = 'AV1';
+				$info['video']['fourcc'] = 'av01';
+				$info['video']['codec_string'] =  "{$info['video']['fourcc']}.{$av1C['seq_profile']}.{$av1C['seq_level_idx']}{$av1C['seq_tier']}.";
+				$info['video']['codec_string'] .= str_pad( $info['video']['bits_per_sample'], 2, '0', STR_PAD_LEFT );
 			}
 		}
 
