@@ -2396,7 +2396,7 @@ $this->error('AVIF files not currently supported');
 				case 'tfhd': // Track Fragment HeaDer box
 				case 'mfhd': // Movie Fragment HeaDer box
 				case 'trun': // Track fragment RUN box
-$this->error('fragmented mp4 files not currently supported');
+$this->warning('fragmented mp4 files not currently supported');
 					$atom_structure['data'] = $atom_data;
 					break;
 
